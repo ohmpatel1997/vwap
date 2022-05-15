@@ -36,16 +36,10 @@ func (suite *MatchConsumerSuite) SetupTest() {
 	suite.matchUseCase = &usecase.MatchUseCase{}
 	suite.useCase = &usecase.UseCase{}
 	suite.useCase.On("MatchVWAP").Return(suite.matchUseCase)
-	suite.consumer = NewMatchConsumer(logger, suite.useCase, suite.config)
+	suite.consumer = NewVWAPConsumer(logger, suite.useCase, suite.config)
 }
 
-func (suite *MatchConsumerSuite) Test_Consume_CastError() {
-	err := suite.consumer.Consume(nil)
-	assert.Error(suite.T(), err)
-	assert.ErrorIs(suite.T(), err, ErrBadMatchMessage)
-}
-
-func (suite *MatchConsumerSuite) Test_Consume_UseCaseError() {
+func (suite *MatchConsumerSuite) TestTradingPairNotFound() {
 	suite.matchUseCase.On("UpdateVWAP", mock.Anything).Return(repository.ErrTradingPairNotFound)
 	err := suite.consumer.Consume(&entity.Match{
 		ProductID: "Test",
@@ -56,7 +50,7 @@ func (suite *MatchConsumerSuite) Test_Consume_UseCaseError() {
 	assert.ErrorIs(suite.T(), err, repository.ErrTradingPairNotFound)
 }
 
-func (suite *MatchConsumerSuite) Test_Consume_Ok() {
+func (suite *MatchConsumerSuite) TestSuccessfullyConsume() {
 	suite.matchUseCase.On("UpdateVWAP", mock.Anything).Return(nil)
 	err := suite.consumer.Consume(&entity.Match{
 		ProductID: "BTC-USD",

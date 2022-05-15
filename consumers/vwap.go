@@ -9,7 +9,12 @@ import (
 	"github.com/ohmpatel1997/vwap/entity"
 )
 
-type matchConsumer struct {
+//go:generate mockery --name Consumer --case underscore --output ../../pkg/mocks/consumers --outpkg consumers
+type Consumer interface {
+	Consume(message interface{}) error
+}
+
+type vwapConsumer struct {
 	config  *entity.Config
 	useCase usecase.UseCase
 	logger  *log.Logger
@@ -19,15 +24,15 @@ var (
 	ErrBadMatchMessage = errors.New("bad message")
 )
 
-func NewMatchConsumer(logger *log.Logger, useCase usecase.UseCase, config *entity.Config) Consumer {
-	return &matchConsumer{
+func NewVWAPConsumer(logger *log.Logger, useCase usecase.UseCase, config *entity.Config) Consumer {
+	return &vwapConsumer{
 		config:  config,
 		useCase: useCase,
 		logger:  logger,
 	}
 }
 
-func (m *matchConsumer) Consume(msg interface{}) error {
+func (m *vwapConsumer) Consume(msg interface{}) error {
 	message, ok := msg.(*entity.Match)
 
 	if !ok {
