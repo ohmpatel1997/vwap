@@ -202,6 +202,7 @@ func (m *WebSocket) write(conn *websocket.Conn, msgType int) {
 		select {
 		case msg, ok := <-m.outputCh:
 			if ok {
+				fmt.Println("message---", msg)
 				if err := conn.SetWriteDeadline(time.Now().Add(3 * time.Second)); err != nil {
 					m.logger.WithFields(log.Fields{
 						"msg": string(msg),

@@ -65,6 +65,7 @@ func TestWebSocketSuite(t *testing.T) {
 
 func (suite *WebSocketSuite) SetupTest() {
 	suite.logger = log.New()
+	suite.logger.Level = log.DebugLevel
 }
 
 func (suite *WebSocketSuite) wrongState(expected, state WSState, err error) {
@@ -73,6 +74,7 @@ func (suite *WebSocketSuite) wrongState(expected, state WSState, err error) {
 		"state":         state,
 		"error":         err,
 	}).Error("wrong state")
+	suite.T().Fatal("wrong state", "expectedState", expected, "state", state, "error", err)
 }
 
 func (suite *WebSocketSuite) TestBadURL() {
@@ -143,96 +145,6 @@ func (suite *WebSocketSuite) TestConnect() {
 	}
 
 	srv.Close()
-}
-
-func (suite *WebSocketSuite) TestReconnect() {
-	srv := httptest.NewServer(NewEchoer())
-	defer srv.Close()
-
-	URL := httpToWs(srv.URL)
-	suite.logger.WithField("URL", URL).Debug("set server URL")
-
-	ws := NewWebSocket(suite.logger, URL, http.Header{})
-
-	ws.wg.Add(1)
-
-	go ws.DriverProgram()
-
-	statusCh := ws.Status()
-	outCh := ws.Output()
-	cmdCh := ws.Command()
-
-	if st := <-statusCh; st.State != WS_CONNECTING {
-		suite.wrongState(WS_CONNECTING, st.State, st.Error)
-	}
-	if st := <-statusCh; st.State != WS_CONNECTED {
-		suite.wrongState(WS_CONNECTED, st.State, st.Error)
-	}
-
-	// server unexpectedly closes our connection
-	outCh <- []byte("/CLOSE")
-
-	// wait for a re-connection
-	for _, state := range []WSState{WS_DISCONNECTED, WS_CONNECTING, WS_CONNECTED} {
-		select {
-		case st := <-statusCh:
-			if st.State != state {
-				suite.wrongState(state, st.State, st.Error)
-			}
-		case <-time.After(200 * time.Millisecond):
-			suite.logger.WithField("expectedState", state).Error("WSChan has not changed state in time, expected")
-		}
-	}
-
-	// cleanup
-	cmdCh <- WS_QUIT
-	<-statusCh // DISCONNECTED
-}
-
-func (suite *WebSocketSuite) TestServerDisappear() {
-	srv := httptest.NewServer(NewEchoer())
-	defer srv.Close()
-
-	URL := httpToWs(srv.URL)
-	suite.logger.WithField("URL", URL).Debug("set server URL")
-
-	ws := NewWebSocket(suite.logger, URL, http.Header{})
-
-	ws.wg.Add(1)
-
-	go ws.DriverProgram()
-
-	statusCh := ws.Status()
-	outCh := ws.Output()
-	cmdCh := ws.Command()
-
-	if st := <-statusCh; st.State != WS_CONNECTING {
-		suite.wrongState(WS_CONNECTING, st.State, st.Error)
-	}
-	if st := <-statusCh; st.State != WS_CONNECTED {
-		suite.wrongState(WS_CONNECTED, st.State, st.Error)
-	}
-
-	// server unexpectedly disappear
-	outCh <- []byte("/CLOSE")
-	srv.Listener.Close()
-	srv.Close()
-
-	// expect a re-connection attempt and then waiting
-	for _, state := range []WSState{WS_DISCONNECTED, WS_CONNECTING, WS_DISCONNECTED, WS_WAITING} {
-		select {
-		case st := <-statusCh:
-			if st.State != state {
-				suite.wrongState(state, st.State, st.Error)
-			}
-		case <-time.After(200 * time.Millisecond):
-			suite.logger.WithField("expectedState", state).Error("WSChan has not changed state in time, expected")
-		}
-	}
-
-	// cleanup
-	cmdCh <- WS_QUIT
-	<-statusCh // DISCONNECTED
 }
 
 func (suite *WebSocketSuite) TestEcho() {
