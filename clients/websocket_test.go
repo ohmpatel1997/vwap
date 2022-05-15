@@ -3,6 +3,7 @@ package clients
 // based on https://github.com/aglyzov/ws-machine
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -88,29 +89,25 @@ func (suite *WebSocketSuite) TestBadURL() {
 	go ws.DriverProgram()
 
 	statusCh := ws.Status()
-	cmdCh := ws.Command()
 
+	fmt.Println("1")
 	st := <-statusCh
 	if st.State != WS_CONNECTING {
 		suite.wrongState(WS_CONNECTING, st.State, st.Error)
 	}
 
+	fmt.Println("2")
 	st = <-statusCh
 	if st.State != WS_WAITING {
 		suite.wrongState(WS_WAITING, st.State, st.Error)
 	}
 
+	fmt.Println("3")
 	st = <-statusCh
 	if st.State != WS_DISCONNECTED {
 		suite.wrongState(WS_DISCONNECTED, st.State, st.Error)
 	}
 
-	cmdCh <- WS_QUIT
-
-	st = <-statusCh
-	if st.State != WS_DISCONNECTED {
-		suite.wrongState(WS_DISCONNECTED, st.State, st.Error)
-	}
 }
 
 func (suite *WebSocketSuite) TestConnect() {
@@ -211,7 +208,7 @@ func (suite *WebSocketSuite) TestStrings() {
 	var testCommand WSCommand = 12
 	assert.Equal(suite.T(), "UNKNOWN COMMAND 12", testCommand.String())
 
-	for _, command := range []WSCommand{WS_QUIT, WS_USE_BINARY, WS_USE_TEXT} {
+	for _, command := range []WSCommand{WS_QUIT} {
 		assert.NotContains(suite.T(), command.String(), "UNKNOWN")
 	}
 }

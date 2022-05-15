@@ -105,10 +105,6 @@ func (m *coinbaseRateFeed) publishMatchMessage(packet *entity.Match) {
 	}
 }
 
-func (m *coinbaseRateFeed) useTextProtocol(command chan<- WSCommand) {
-	command <- WS_USE_TEXT
-}
-
 func (m *coinbaseRateFeed) subscriptionTimeout() {
 	m.logger.Debug("subscriptionTimeout has started")
 
@@ -149,7 +145,7 @@ func (m *coinbaseRateFeed) subscribe(output chan<- []byte) {
 	m.changeSubscription(output, TypeSubscribe)
 }
 
-func (m *coinbaseRateFeed) processStatus(command chan<- WSCommand, output chan<- []byte, status WSStatus) error {
+func (m *coinbaseRateFeed) processStatus(output chan<- []byte, status WSStatus) error {
 	if status.Error != nil {
 		return status.Error
 	}
@@ -157,7 +153,6 @@ func (m *coinbaseRateFeed) processStatus(command chan<- WSCommand, output chan<-
 	m.logger.WithField("status", m.state).Debug("changed status")
 	if !m.isStopped() { // if not stopped, very first subscribe message
 		if status.State == WS_CONNECTED {
-			m.useTextProtocol(command)
 			m.subscribe(output)
 		}
 	}
@@ -241,7 +236,7 @@ func (m *coinbaseRateFeed) Run() {
 					m.wg.Done()
 					break status
 				}
-				_ = m.processStatus(command, output, st)
+				_ = m.processStatus(output, st)
 			case msg, ok := <-input:
 				if ok {
 					_ = m.processMessage(command, msg) // ignore protocol errors

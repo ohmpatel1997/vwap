@@ -52,10 +52,6 @@ const (
 const (
 	// WS_QUIT used to quite the process
 	WS_QUIT WSCommand = 16 + iota
-	// WS_USE_TEXT is used to notify switch to text protocol
-	WS_USE_TEXT
-	// WS_USE_BINARY is used to notify switch to binary protocol
-	WS_USE_BINARY
 )
 
 var (
@@ -82,10 +78,6 @@ func (c WSCommand) String() string {
 	switch c {
 	case WS_QUIT:
 		return "QUIT"
-	case WS_USE_TEXT:
-		return "USE_TEXT"
-	case WS_USE_BINARY:
-		return "USE_BINARY"
 	}
 	return fmt.Sprintf("UNKNOWN COMMAND %d", c)
 }
@@ -141,7 +133,7 @@ func (m *WebSocket) Command() chan<- WSCommand {
 	return m.cmdCh
 }
 
-func (m *WebSocket) connect() {
+func (m *WebSocket) connect() (*websocket.Conn, error) {
 	m.wg.Add(1)
 	defer func() {
 		m.wg.Done()
@@ -149,25 +141,18 @@ func (m *WebSocket) connect() {
 
 	m.logger.Debug("connect has started")
 
-	for {
-		m.statusCh <- WSStatus{State: WS_CONNECTING}
-		dialer := websocket.Dialer{HandshakeTimeout: 5 * time.Second}
-		conn, _, err := dialer.Dial(m.url, m.headers)
-		if err == nil {
-			m.conReturnCh <- conn
-			m.statusCh <- WSStatus{State: WS_CONNECTED}
-			return
-		}
-		m.logger.WithField("error", err).Error("connect error")
-		m.statusCh <- WSStatus{State: WS_WAITING}
-		m.statusCh <- WSStatus{WS_DISCONNECTED, err}
-		select {
-		case <-time.After(3 * time.Second):
-		case <-m.conCancelCh:
-			m.statusCh <- WSStatus{WS_DISCONNECTED, ErrWSCanceled}
-			return
-		}
+	m.statusCh <- WSStatus{State: WS_CONNECTING}
+	dialer := websocket.Dialer{HandshakeTimeout: 5 * time.Second}
+	conn, _, err := dialer.Dial(m.url, m.headers)
+	if err == nil {
+		m.statusCh <- WSStatus{State: WS_CONNECTED}
+		return conn, nil
 	}
+
+	m.logger.WithField("error", err).Error("connect error")
+	m.statusCh <- WSStatus{State: WS_WAITING}
+	m.statusCh <- WSStatus{WS_DISCONNECTED, err}
+	return nil, fmt.Errorf("could not able to connect")
 }
 
 func (m *WebSocket) read(conn *websocket.Conn) {
@@ -190,7 +175,7 @@ func (m *WebSocket) read(conn *websocket.Conn) {
 	}
 }
 
-func (m *WebSocket) write(conn *websocket.Conn, msgType int) {
+func (m *WebSocket) write(conn *websocket.Conn) {
 	m.wg.Add(1)
 	defer func() {
 		m.wg.Done()
@@ -209,7 +194,7 @@ func (m *WebSocket) write(conn *websocket.Conn, msgType int) {
 					m.writeErrorCh <- err
 					return
 				}
-				if err := conn.WriteMessage(msgType, msg); err != nil {
+				if err := conn.WriteMessage(websocket.TextMessage, msg); err != nil {
 					m.logger.WithFields(log.Fields{
 						"msg": string(msg),
 					}).Error("writing message")
@@ -232,10 +217,6 @@ func (m *WebSocket) write(conn *websocket.Conn, msgType int) {
 				m.logger.Debug("write received WS_QUIT command")
 				m.writeErrorCh <- ErrWSCanceled
 				return
-			case WS_USE_TEXT:
-				msgType = websocket.TextMessage
-			case WS_USE_BINARY:
-				msgType = websocket.BinaryMessage
 			}
 		}
 	}
@@ -291,10 +272,6 @@ drainLoop:
 // DriverProgram start WebSocket reader, writer, connection
 func (m *WebSocket) DriverProgram() {
 	var conn *websocket.Conn
-	reading := false
-	writing := false
-	msgType := websocket.BinaryMessage // use Binary messages by default
-
 	defer func() {
 		m.logger.Debug("cleanup has started")
 		if conn != nil {
@@ -304,25 +281,23 @@ func (m *WebSocket) DriverProgram() {
 		m.cleanup()
 	}()
 
-	m.logger.Debug("main loop has started")
+	conn, err := m.connect()
+	if err != nil { // clean it
+		m.cmdCh <- WS_QUIT
+	}
 
-	go m.connect()
+	m.logger.WithFields(log.Fields{
+		"local":  conn.LocalAddr(),
+		"remote": conn.RemoteAddr(),
+	}).Info("connected")
+
+	reading := true
+	writing := true
+	go m.read(conn)
+	go m.write(conn)
 
 	for {
 		select {
-		case conn = <-m.conReturnCh:
-			if conn == nil {
-				return
-			}
-			m.logger.WithFields(log.Fields{
-				"local":  conn.LocalAddr(),
-				"remote": conn.RemoteAddr(),
-			}).Info("connected")
-
-			reading = true
-			writing = true
-			go m.read(conn)
-			go m.write(conn, msgType)
 		case err := <-m.readErrorCh:
 			reading = false
 			if writing {
@@ -353,16 +328,6 @@ func (m *WebSocket) DriverProgram() {
 					m.statusCh <- WSStatus{WS_DISCONNECTED, nil}
 				}
 				return // defer should clean everything up
-			case cmd == WS_USE_TEXT:
-				msgType = websocket.TextMessage
-				if writing {
-					m.writeControlCh <- cmd
-				}
-			case cmd == WS_USE_BINARY:
-				msgType = websocket.BinaryMessage
-				if writing {
-					m.writeControlCh <- cmd
-				}
 			default:
 				panic(fmt.Sprintf("unsupported command: %v", cmd))
 			}
