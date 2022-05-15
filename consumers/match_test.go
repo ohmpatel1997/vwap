@@ -35,11 +35,8 @@ func (suite *MatchConsumerSuite) SetupTest() {
 	}
 	suite.matchUseCase = &usecase.MatchUseCase{}
 	suite.useCase = &usecase.UseCase{}
-	suite.useCase.On("Match").Return(suite.matchUseCase)
+	suite.useCase.On("MatchVWAP").Return(suite.matchUseCase)
 	suite.consumer = NewMatchConsumer(logger, suite.useCase, suite.config)
-}
-
-func (suite *MatchConsumerSuite) TearDownTest() {
 }
 
 func (suite *MatchConsumerSuite) Test_Consume_CastError() {

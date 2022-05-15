@@ -9,7 +9,7 @@ import (
 	"github.com/ohmpatel1997/vwap/repository"
 )
 
-// MatchUseCase – use case for processing *entity.Match entities
+//go:generate mockery --name MatchUseCase --case underscore --output ../../pkg/mocks/usecase --outpkg usecase
 type MatchUseCase interface {
 	UpdateVWAP(match *entity.Match) error
 }
@@ -20,7 +20,6 @@ type matchUseCase struct {
 	config   *entity.Config
 }
 
-// ErrNegativeOrZeroValue – wrong *entity.Match instance with Size or Price fields having zero or negative values
 var ErrNegativeOrZeroValue = errors.New("negative or zero value of volume or price")
 
 func newMatchUseCase(

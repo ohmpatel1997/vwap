@@ -67,9 +67,6 @@ func (suite *WebSocketSuite) SetupTest() {
 	suite.logger = log.New()
 }
 
-func (suite *WebSocketSuite) TearDownTest() {
-}
-
 func (suite *WebSocketSuite) wrongState(expected, state WSState, err error) {
 	suite.logger.WithFields(log.Fields{
 		"expectedState": expected,
@@ -130,11 +127,11 @@ func (suite *WebSocketSuite) TestConnect() {
 
 	st := <-statusCh
 	if st.State != WS_CONNECTING {
-		suite.wrongState(WS_CONNECTING, st.State, st.Error)
+		suite.T().Fatal(WS_CONNECTING, st.State, st.Error)
 	}
 	st = <-statusCh
 	if st.State != WS_CONNECTED {
-		suite.wrongState(WS_CONNECTED, st.State, st.Error)
+		suite.T().Fatal(WS_CONNECTED, st.State, st.Error)
 	}
 
 	// cleanup
@@ -142,7 +139,7 @@ func (suite *WebSocketSuite) TestConnect() {
 
 	st = <-statusCh
 	if st.State != WS_DISCONNECTED {
-		suite.wrongState(WS_DISCONNECTED, st.State, st.Error)
+		suite.T().Fatal(WS_DISCONNECTED, st.State, st.Error)
 	}
 
 	srv.Close()

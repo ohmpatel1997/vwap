@@ -319,7 +319,6 @@ func (m *WebSocket) DriverProgram() {
 				"remote": conn.RemoteAddr(),
 			}).Info("connected")
 
-			fmt.Println("turning reading and writing")
 			reading = true
 			writing = true
 			go m.read(conn)

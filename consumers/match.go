@@ -38,5 +38,5 @@ func (m *matchConsumer) Consume(msg interface{}) error {
 		return ErrBadMatchMessage
 	}
 
-	return m.useCase.Match().UpdateVWAP(message)
+	return m.useCase.MatchVWAP().UpdateVWAP(message)
 }

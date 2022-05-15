@@ -6,7 +6,7 @@ import (
 	"github.com/ohmpatel1997/vwap/entity"
 )
 
-// MatchRepository – Match repository interface
+//go:generate mockery --name MatchRepository --case underscore --output ../../pkg/mocks/repository --outpkg repository
 type MatchRepository interface {
 	Len(tradingPair string) (int, error)
 	Append(tradingPair string, deal *entity.Deal) error

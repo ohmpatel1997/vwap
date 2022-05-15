@@ -5,11 +5,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ohmpatel1997/vwap/entity"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/ohmpatel1997/vwap/entity"
 )
 
 type VWAPProducerSuite struct {
