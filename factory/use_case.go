@@ -1,4 +1,4 @@
-package usecase
+package factory
 
 import (
 	"github.com/ohmpatel1997/vwap/entity"
@@ -15,7 +15,7 @@ type useCase struct {
 	match MatchUseCase
 }
 
-func NewUseCase(
+func New(
 	repo repository.Repository,
 	producer producers.Producer,
 	config *entity.Config,

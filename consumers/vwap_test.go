@@ -3,6 +3,7 @@ package consumers
 import (
 	"testing"
 
+	"github.com/ohmpatel1997/vwap/factory"
 	"github.com/ohmpatel1997/vwap/repository"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -58,4 +59,25 @@ func (suite *MatchConsumerSuite) TestSuccessfullyConsume() {
 		Size:      "100",
 	})
 	assert.NoError(suite.T(), err)
+}
+
+func (suite *MatchConsumerSuite) TestNegativeOrZeroValue() {
+	suite.matchUseCase.On("UpdateVWAP", mock.Anything).Return(factory.ErrNegativeOrZeroValue)
+	err := suite.consumer.Consume(&entity.Match{
+		ProductID: "BTC-USD",
+		Price:     "-0.01",
+		Size:      "100",
+	})
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), err, factory.ErrNegativeOrZeroValue, "TestNegativeOrZeroValue error mismatch")
+}
+
+func (suite *MatchConsumerSuite) TestInvalidFloatValues() {
+	suite.matchUseCase.On("UpdateVWAP", mock.Anything).Return(factory.ErrNegativeOrZeroValue)
+	err := suite.consumer.Consume(&entity.Match{
+		ProductID: "BTC-USD",
+		Price:     "-1.131.343",
+		Size:      "100.12.334",
+	})
+	assert.Error(suite.T(), err)
 }

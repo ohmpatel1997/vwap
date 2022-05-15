@@ -7,6 +7,7 @@ import (
 	"github.com/ohmpatel1997/vwap/entity"
 )
 
+//go:generate mockery --name VWAP --case underscore --output ../../pkg/mocks/producers --outpkg producers
 // VWAP – interface of VWAP producer
 type VWAP interface {
 	Send(msg *entity.VWAP) error

@@ -10,9 +10,9 @@ import (
 	"github.com/ohmpatel1997/vwap/clients"
 	"github.com/ohmpatel1997/vwap/consumers"
 	"github.com/ohmpatel1997/vwap/entity"
+	"github.com/ohmpatel1997/vwap/factory"
 	"github.com/ohmpatel1997/vwap/producers"
 	"github.com/ohmpatel1997/vwap/repository"
-	"github.com/ohmpatel1997/vwap/usecase"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -57,7 +57,7 @@ func main() {
 
 	repo := repository.NewRepository(cfg)
 	producer := producers.NewProducer()
-	useCase := usecase.NewUseCase(repo, producer, cfg)
+	useCase := factory.New(repo, producer, cfg)
 
 	matchConsumer := consumers.NewVWAPConsumer(logger, useCase, cfg)
 	client.RegisterMatchConsumer(matchConsumer)

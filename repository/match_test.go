@@ -28,9 +28,8 @@ func (suite *MatchRepositorySuite) SetupTest() {
 	suite.repo = NewRepository(config)
 }
 
-// Test_MatchRepository_Append_WrongProductID – try to add Deal from the unsubscribed channel
-func (suite *MatchRepositorySuite) Test_MatchRepository_Append_WrongProductID() {
-	err := suite.repo.Match().Append("Test", &entity.Deal{
+func (suite *MatchRepositorySuite) TestMatchRepositoryAppendWrongProductID() {
+	err := suite.repo.Match().Append("Testing", &entity.Deal{
 		Volume: 10,
 		Price:  5,
 	})
@@ -38,8 +37,7 @@ func (suite *MatchRepositorySuite) Test_MatchRepository_Append_WrongProductID() 
 	assert.ErrorIs(suite.T(), ErrTradingPairNotFound, err)
 }
 
-// Test_MatchRepository_Append_Ok – adding Deal from the subscribed channel
-func (suite *MatchRepositorySuite) Test_MatchRepository_Append_Ok() {
+func (suite *MatchRepositorySuite) TestMatchRepositoryAppendSuccess() {
 	err := suite.repo.Match().Append("BTC-USD", &entity.Deal{
 		Volume: 1000,
 		Price:  0.01,
@@ -47,8 +45,7 @@ func (suite *MatchRepositorySuite) Test_MatchRepository_Append_Ok() {
 	assert.NoError(suite.T(), err)
 }
 
-// Test_MatchRepository_Len_WrongProductID – try to gen circular buffer size of the non-existing trading pair
-func (suite *MatchRepositorySuite) Test_MatchRepository_Len_WrongProductID() {
+func (suite *MatchRepositorySuite) TestMatchRepositoryLenWrongProductID() {
 	err := suite.repo.Match().Append("BTC-USD", &entity.Deal{
 		Volume: 1000,
 		Price:  0.01,
@@ -60,8 +57,7 @@ func (suite *MatchRepositorySuite) Test_MatchRepository_Len_WrongProductID() {
 	assert.ErrorIs(suite.T(), ErrTradingPairNotFound, err)
 }
 
-// Test_MatchRepository_Len_OK – get length of some existing circular buffers
-func (suite *MatchRepositorySuite) Test_MatchRepository_Len_OK() {
+func (suite *MatchRepositorySuite) TestMatchRepositoryLenSuccess() {
 	err := suite.repo.Match().Append("BTC-USD", &entity.Deal{
 		Volume: 1000,
 		Price:  0.01,
@@ -82,15 +78,13 @@ func (suite *MatchRepositorySuite) Test_MatchRepository_Len_OK() {
 	assert.EqualValues(suite.T(), 0, length)
 }
 
-// Test_MatchRepository_GetVWAP_WrongProductID – try to get VWAP value for unsubscribed channel
-func (suite *MatchRepositorySuite) Test_MatchRepository_GetVWAP_WrongProductID() {
+func (suite *MatchRepositorySuite) TestMatchRepositoryGetVWAPWrongProductID() {
 	_, err := suite.repo.Match().GetVWAP("Test")
 	assert.Error(suite.T(), err)
 	assert.ErrorIs(suite.T(), ErrTradingPairNotFound, err)
 }
 
-// Test_MatchRepository_GetVWAP_DivisionByZero – try to get VWAP with division by zero error
-func (suite *MatchRepositorySuite) Test_MatchRepository_GetVWAP_DivisionByZero() {
+func (suite *MatchRepositorySuite) TestMatchRepositoryGetVWAPDivisionByZero() {
 	err := suite.repo.Match().Append("BTC-USD", &entity.Deal{
 		Volume: 0,
 		Price:  0.01,
@@ -102,8 +96,7 @@ func (suite *MatchRepositorySuite) Test_MatchRepository_GetVWAP_DivisionByZero()
 	assert.ErrorIs(suite.T(), ErrDivisionByZero, err)
 }
 
-// Test_MatchRepository_GetVWAP_Ok – successfully get VWAP
-func (suite *MatchRepositorySuite) Test_MatchRepository_GetVWAP_Ok() {
+func (suite *MatchRepositorySuite) TestMatchRepositoryGetVWAPSuccess() {
 	err := suite.repo.Match().Append("BTC-USD", &entity.Deal{
 		Volume: 1000,
 		Price:  0.01,

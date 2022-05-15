@@ -24,7 +24,7 @@ func (suite *VWAPProducerSuite) SetupTest() {
 	suite.producer = NewProducer()
 }
 
-func (suite *VWAPProducerSuite) Test_VWAPProducer_Ok() {
+func (suite *VWAPProducerSuite) TestVWAPProducerSuccess() {
 	reader, writer, err := os.Pipe()
 	if err != nil {
 		log.WithField("error", err).Fatal("Failed to create STDOUT mock")

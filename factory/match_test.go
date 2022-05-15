@@ -1,4 +1,4 @@
-package usecase
+package factory
 
 import (
 	"container/list"
@@ -40,23 +40,23 @@ func (suite *MatchUseCaseSuite) SetupTest() {
 	suite.vwapProducer = new(producers.VWAP)
 	suite.producer = new(producers.Producer)
 	suite.producer.On("VWAP").Return(suite.vwapProducer)
-	suite.useCase = NewUseCase(suite.repo, suite.producer, suite.config)
+	suite.useCase = New(suite.repo, suite.producer, suite.config)
 }
 
-func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_BadVolume() {
+func (suite *MatchUseCaseSuite) TestMatchUseCaseUpdateVWAPBadVolume() {
 	err := suite.useCase.MatchVWAP().UpdateVWAP(&entity.Match{
-		Size: "Test",
+		Size: "Testing",
 	})
 	assert.Error(suite.T(), err)
 	expectedError := (&strconv.NumError{
 		Func: "ParseFloat",
-		Num:  "Test",
+		Num:  "Testing",
 		Err:  strconv.ErrSyntax,
 	}).Error()
 	assert.EqualValues(suite.T(), expectedError, err.Error())
 }
 
-func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_BadPrice() {
+func (suite *MatchUseCaseSuite) TestMatchUseCaseUpdateVWAPBadPrice() {
 	err := suite.useCase.MatchVWAP().UpdateVWAP(&entity.Match{
 		Size:  "1000",
 		Price: "Test",
@@ -70,7 +70,7 @@ func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_BadPrice() {
 	assert.EqualValues(suite.T(), expectedError, err.Error())
 }
 
-func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_ZeroVolume() {
+func (suite *MatchUseCaseSuite) TestMatchUseCaseUpdateVWAPZeroVolume() {
 	err := suite.useCase.MatchVWAP().UpdateVWAP(&entity.Match{
 		Size:  "0",
 		Price: "100.0",
@@ -79,7 +79,7 @@ func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_ZeroVolume() {
 	assert.ErrorIs(suite.T(), ErrNegativeOrZeroValue, err)
 }
 
-func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_ZeroPrice() {
+func (suite *MatchUseCaseSuite) TestMatchUseCaseUpdateVWAPZeroPrice() {
 	err := suite.useCase.MatchVWAP().UpdateVWAP(&entity.Match{
 		Size:  "100",
 		Price: "0.0",
@@ -89,7 +89,7 @@ func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_ZeroPrice() {
 }
 
 // volume is negative
-func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_NegativeVolume() {
+func (suite *MatchUseCaseSuite) TestMatchUseCaseUpdateVWAPNegativeVolume() {
 	err := suite.useCase.MatchVWAP().UpdateVWAP(&entity.Match{
 		Size:  "-1",
 		Price: "100.0",
@@ -99,7 +99,7 @@ func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_NegativeVolume() {
 }
 
 // price is negative
-func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_NegativePrice() {
+func (suite *MatchUseCaseSuite) TestMatchUseCaseUpdateVWAPNegativePrice() {
 	err := suite.useCase.MatchVWAP().UpdateVWAP(&entity.Match{
 		Size:  "100",
 		Price: "-1.0",
@@ -109,7 +109,7 @@ func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_NegativePrice() {
 }
 
 // error while appending new deal
-func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_AppendError() {
+func (suite *MatchUseCaseSuite) TestMatchUseCaseUpdateVWAPAppendError() {
 	err := suite.useCase.MatchVWAP().UpdateVWAP(&entity.Match{
 		Size:      "1000",
 		Price:     "0.01",
@@ -120,7 +120,7 @@ func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_AppendError() {
 }
 
 // error while producing calculated VWAP
-func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_ProduceError() {
+func (suite *MatchUseCaseSuite) TestMatchUseCaseUpdateVWAPProduceError() {
 	_, expectedError := json.Marshal(make(chan int))
 	suite.vwapProducer.On("Send", mock.Anything).Return(expectedError)
 	suite.producer.On("VWAP").Return(suite.vwapProducer)
@@ -135,15 +135,15 @@ func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_ProduceError() {
 }
 
 // simulate GetVWAP error
-func (suite *MatchUseCaseSuite) Test_MatchUseCase_UpdateVWAP_GetVWAPError() {
+func (suite *MatchUseCaseSuite) TestMatchUseCaseUpdateVWAPGetVWAPError() {
 	matchRepo := new(mockRepository.MatchRepository)
 	matchRepo.On("Len", mock.Anything).Return(0, nil)
 	matchRepo.On("Append", mock.Anything, mock.Anything).Return(nil)
 	matchRepo.On("GetVWAP", mock.Anything).Return(nil, repository2.ErrTradingPairNotFound)
 	repo := new(mockRepository.Repository)
 	repo.On("Match").Return(matchRepo)
-	useCase := NewUseCase(repo, nil, suite.config)
-	err := useCase.MatchVWAP().UpdateVWAP(&entity.Match{
+	useCaseFactory := New(repo, nil, suite.config)
+	err := useCaseFactory.MatchVWAP().UpdateVWAP(&entity.Match{
 		Size:      "1000",
 		Price:     "0.01",
 		ProductID: "BTC-USD",
