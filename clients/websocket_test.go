@@ -94,13 +94,15 @@ func (suite *WebSocketSuite) TestBadURL() {
 	if st.State != WS_CONNECTING {
 		suite.wrongState(WS_CONNECTING, st.State, st.Error)
 	}
-	st = <-statusCh
-	if st.State != WS_DISCONNECTED {
-		suite.wrongState(WS_DISCONNECTED, st.State, st.Error)
-	}
+
 	st = <-statusCh
 	if st.State != WS_WAITING {
 		suite.wrongState(WS_WAITING, st.State, st.Error)
+	}
+
+	st = <-statusCh
+	if st.State != WS_DISCONNECTED {
+		suite.wrongState(WS_DISCONNECTED, st.State, st.Error)
 	}
 
 	cmdCh <- WS_QUIT
