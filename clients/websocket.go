@@ -26,8 +26,6 @@ type (
 		outputCh       chan []byte
 		statusCh       chan WSStatus
 		cmdCh          chan WSCommand
-		conReturnCh    chan *websocket.Conn
-		conCancelCh    chan bool
 		readErrorCh    chan error
 		writeErrorCh   chan error
 		writeControlCh chan WSCommand
@@ -91,8 +89,6 @@ func NewWebSocket(logger *log.Logger, url string, headers http.Header) *WebSocke
 		outputCh:       make(chan []byte, 8),
 		statusCh:       make(chan WSStatus, 2),
 		cmdCh:          make(chan WSCommand, 2),
-		conReturnCh:    make(chan *websocket.Conn, 1),
-		conCancelCh:    make(chan bool, 1),
 		readErrorCh:    make(chan error, 1),
 		writeErrorCh:   make(chan error, 1),
 		writeControlCh: make(chan WSCommand, 1),
@@ -224,7 +220,6 @@ func (m *WebSocket) write(conn *websocket.Conn) {
 
 func (m *WebSocket) cleanup() {
 	// close local output channels
-	close(m.conCancelCh)    // this makes connect    to exit
 	close(m.writeControlCh) // this makes write      to exit
 
 	// drain inputCh channels
@@ -240,13 +235,6 @@ drainLoop:
 		case _, ok := <-m.cmdCh:
 			if !ok {
 				m.inputCh = nil
-			}
-		case conn, ok := <-m.conReturnCh:
-			if conn != nil {
-				conn.Close()
-			}
-			if !ok {
-				m.conReturnCh = nil
 			}
 		case _, ok := <-m.readErrorCh:
 			if !ok {
@@ -269,7 +257,7 @@ drainLoop:
 	close(m.statusCh)
 }
 
-// DriverProgram start WebSocket reader, writer, connection
+// DriverProgram start WebSocket reader, writer, connection establishment
 func (m *WebSocket) DriverProgram() {
 	var conn *websocket.Conn
 	defer func() {
