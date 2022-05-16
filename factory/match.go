@@ -9,7 +9,7 @@ import (
 	"github.com/ohmpatel1997/vwap/repository"
 )
 
-//go:generate mockery --name MatchUseCase --case underscore --output ../../pkg/mocks/usecase --outpkg usecase
+//go:generate mockery --name MatchUseCase --output ../../pkg/mocks/usecase --outpkg usecase
 type MatchUseCase interface {
 	UpdateVWAP(match *entity.Match) error
 }

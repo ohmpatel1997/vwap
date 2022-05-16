@@ -6,7 +6,7 @@ import (
 	"github.com/ohmpatel1997/vwap/repository"
 )
 
-//go:generate mockery --name UseCase --case underscore --output ../../pkg/mocks/usecase --outpkg usecase
+//go:generate mockery --name UseCase --output ../../pkg/mocks/usecase --outpkg usecase
 type UseCase interface {
 	MatchVWAP() MatchUseCase
 }

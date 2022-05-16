@@ -9,7 +9,7 @@ import (
 	"github.com/ohmpatel1997/vwap/entity"
 )
 
-//go:generate mockery --name Consumer --case underscore --output ../../pkg/mocks/consumers --outpkg consumers
+//go:generate mockery --name Consumer --output ../../pkg/mocks/consumers --outpkg consumers
 type Consumer interface {
 	Consume(match *entity.Match) error
 }

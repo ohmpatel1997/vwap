@@ -2,7 +2,7 @@ package repository
 
 import "github.com/ohmpatel1997/vwap/entity"
 
-//go:generate mockery --name Repository --case underscore --output ../../pkg/mocks/repository --outpkg repository
+//go:generate mockery --name Repository --output ../../pkg/mocks/repository --outpkg repository
 type Repository interface {
 	Match() MatchRepository
 }
