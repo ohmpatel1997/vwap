@@ -1,6 +1,6 @@
 package entity
 
-// Channel – entity describing subscription to the channels of Coinbase Websocket feed
+// Channel entity describing subscription to the channels of Coinbase Websocket feed
 type Channel struct {
 	Name       string   `json:"name"`
 	ProductIds []string `json:"product_ids" mapstructure:"product_ids"`

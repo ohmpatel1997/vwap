@@ -8,7 +8,6 @@ import (
 )
 
 //go:generate mockery --name VWAP --output ../../pkg/mocks/producers --outpkg producers
-// VWAP – interface of VWAP producer
 type VWAP interface {
 	Send(msg *entity.VWAP) error
 }
