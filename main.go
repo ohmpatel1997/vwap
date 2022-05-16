@@ -60,7 +60,7 @@ func main() {
 	useCase := factory.New(repo, producer, cfg)
 
 	matchConsumer := consumers.NewVWAPConsumer(logger, useCase, cfg)
-	client.RegisterMatchConsumer(matchConsumer)
+	client.RegisterConsumer(matchConsumer)
 
 	client.Run()
 

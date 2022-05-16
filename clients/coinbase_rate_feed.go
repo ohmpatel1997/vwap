@@ -21,20 +21,14 @@ const (
 )
 
 var (
-	// maximum timeout for waiting for the command response
-	CommandTimeout = 500 * time.Millisecond
-
-	ErrBadConfiguration = errors.New("bad configuration")
-
-	ErrBadJSON = errors.New("could not parse JSON")
-
-	ErrFailedToDeserialize = errors.New("failed to deserialize")
-
+	CommandTimeout            = 500 * time.Millisecond
+	ErrBadConfiguration       = errors.New("bad configuration")
+	ErrFailedToDeserialize    = errors.New("failed to deserialize")
 	ErrUnsupportedMessageType = errors.New("skipping unsupported message with unknown type")
 )
 
-type CoinbaseRateFeedInterface interface {
-	RegisterMatchConsumer(consumer consumers.Consumer)
+type CoinbaseRateFeed interface {
+	RegisterConsumer(consumer consumers.Consumer)
 	Run()
 	Stop()
 }
@@ -51,8 +45,7 @@ type coinbaseRateFeed struct {
 	mu           sync.RWMutex
 }
 
-func NewCoinbaseRateFeed(logger *log.Logger, wg *sync.WaitGroup, config *entity.Config) (CoinbaseRateFeedInterface,
-	error) {
+func NewCoinbaseRateFeed(logger *log.Logger, wg *sync.WaitGroup, config *entity.Config) (CoinbaseRateFeed, error) {
 	if config.URL == "" || len(config.Channels) == 0 || len(config.ProductIDs) == 0 {
 		return nil, ErrBadConfiguration
 	}
@@ -84,7 +77,7 @@ func (m *coinbaseRateFeed) isStopped() bool {
 	return m.stopped
 }
 
-func (m *coinbaseRateFeed) RegisterMatchConsumer(consumer consumers.Consumer) {
+func (m *coinbaseRateFeed) RegisterConsumer(consumer consumers.Consumer) {
 	m.subscribers = append(m.subscribers, consumer)
 }
 
